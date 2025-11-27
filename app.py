@@ -46,43 +46,6 @@ if uploaded_file is not None:
                 # Clean Data
                 df = data_processor.clean_data(df)
                 
-                # --- Global Filters ---
-                st.sidebar.divider()
-                st.sidebar.header("Filters")
-                
-                # 1. College Filter
-                unique_colleges = sorted([str(x) for x in df['College Name'].unique() if pd.notna(x)])
-                selected_colleges = st.sidebar.multiselect("Filter by College", unique_colleges)
-                
-                # 2. State Filter
-                unique_states = sorted([str(x) for x in df['State'].unique() if pd.notna(x)])
-                selected_states = st.sidebar.multiselect("Filter by State", unique_states)
-                
-                # 3. Domain Filter
-                unique_domains = sorted([str(x) for x in df['Domain'].unique() if pd.notna(x)])
-                selected_domains = st.sidebar.multiselect("Filter by Domain", unique_domains)
-                
-                # 4. Review Status Filter
-                review_status = st.sidebar.radio("Filter by Review Status", ["All", "Reviewed", "Pending"])
-                
-                # Apply Filters
-                if selected_colleges:
-                    df = df[df['College Name'].isin(selected_colleges)]
-                    
-                if selected_states:
-                    df = df[df['State'].isin(selected_states)]
-                    
-                if selected_domains:
-                    df = df[df['Domain'].isin(selected_domains)]
-                    
-                if review_status == "Reviewed":
-                    df = df[df['Reviewed By'].notna() & (df['Reviewed By'] != '')]
-                elif review_status == "Pending":
-                    df = df[df['Reviewed By'].isna() | (df['Reviewed By'] == '')]
-                    
-                # Display filtered count
-                st.sidebar.markdown(f"**Active Records: {len(df)}**")
-                
                 # Generate Statistics
                 stats = data_processor.generate_statistics(df)
             
@@ -108,9 +71,18 @@ if uploaded_file is not None:
                 if all_colleges:
                     college_df = pd.DataFrame(all_colleges)
                     
+                    # Explicit Filter for College Name
+                    search_term = st.text_input("🔍 Search College Name", "")
+                    if search_term:
+                        college_df = college_df[college_df['college_name'].str.contains(search_term, case=False, na=False)]
+                    
                     # Display full table
-                    st.caption(f"Showing all {len(college_df)} colleges")
-                    st.dataframe(college_df[['college_name', 'total_teams', 'total_participants']], use_container_width=True)
+                    st.caption(f"Showing {len(college_df)} colleges")
+                    st.dataframe(
+                        college_df[['college_name', 'total_teams', 'total_participants']], 
+                        use_container_width=True,
+                        hide_index=True
+                    )
                     
                     # Chart for top 20 only to keep it readable
                     st.subheader("Top 20 Colleges")
@@ -163,7 +135,31 @@ if uploaded_file is not None:
             
             with tab5:
                 st.subheader("Raw Data")
-                st.dataframe(df)
+                
+                # Dynamic Filters for Raw Data
+                with st.expander("🔍 Advanced Filters (All Columns)", expanded=False):
+                    filtered_df = df.copy()
+                    
+                    # Create 3 columns for filters to save space
+                    cols = st.columns(3)
+                    
+                    for i, column in enumerate(filtered_df.columns):
+                        col_idx = i % 3
+                        with cols[col_idx]:
+                            # Check if column is categorical (few unique values)
+                            if filtered_df[column].nunique() < 20:
+                                options = sorted([str(x) for x in filtered_df[column].unique() if pd.notna(x)])
+                                selected = st.multiselect(f"Filter {column}", options, key=f"filter_{column}")
+                                if selected:
+                                    filtered_df = filtered_df[filtered_df[column].astype(str).isin(selected)]
+                            else:
+                                # Text search for other columns
+                                search_txt = st.text_input(f"Search {column}", key=f"search_{column}")
+                                if search_txt:
+                                    filtered_df = filtered_df[filtered_df[column].astype(str).str.contains(search_txt, case=False, na=False)]
+                
+                st.caption(f"Showing {len(filtered_df)} records")
+                st.dataframe(filtered_df, use_container_width=True, hide_index=True)
 
             # --- Downloads ---
             st.divider()
