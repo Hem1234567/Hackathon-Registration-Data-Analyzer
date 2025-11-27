@@ -1,6 +1,8 @@
 import pandas as pd
 import utils
 
+VERSION = "1.1"
+
 REQUIRED_SHEETS = [
     "Early Bird Individuals 3.0",
     "Early_Bird_3.0", 

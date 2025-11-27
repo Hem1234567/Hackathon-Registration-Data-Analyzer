@@ -8,6 +8,7 @@ import utils
 st.set_page_config(page_title="Hackathon Data Analyzer", layout="wide")
 
 st.title("📊 Hackathon Registration Data Analyzer")
+st.sidebar.text(f"DP Version: {getattr(data_processor, 'VERSION', 'Unknown')}")
 st.markdown("Upload your Excel file to generate comprehensive statistics and insights.")
 
 # File Uploader
@@ -44,6 +45,43 @@ if uploaded_file is not None:
             if df is not None:
                 # Clean Data
                 df = data_processor.clean_data(df)
+                
+                # --- Global Filters ---
+                st.sidebar.divider()
+                st.sidebar.header("Filters")
+                
+                # 1. College Filter
+                unique_colleges = sorted([str(x) for x in df['College Name'].unique() if pd.notna(x)])
+                selected_colleges = st.sidebar.multiselect("Filter by College", unique_colleges)
+                
+                # 2. State Filter
+                unique_states = sorted([str(x) for x in df['State'].unique() if pd.notna(x)])
+                selected_states = st.sidebar.multiselect("Filter by State", unique_states)
+                
+                # 3. Domain Filter
+                unique_domains = sorted([str(x) for x in df['Domain'].unique() if pd.notna(x)])
+                selected_domains = st.sidebar.multiselect("Filter by Domain", unique_domains)
+                
+                # 4. Review Status Filter
+                review_status = st.sidebar.radio("Filter by Review Status", ["All", "Reviewed", "Pending"])
+                
+                # Apply Filters
+                if selected_colleges:
+                    df = df[df['College Name'].isin(selected_colleges)]
+                    
+                if selected_states:
+                    df = df[df['State'].isin(selected_states)]
+                    
+                if selected_domains:
+                    df = df[df['Domain'].isin(selected_domains)]
+                    
+                if review_status == "Reviewed":
+                    df = df[df['Reviewed By'].notna() & (df['Reviewed By'] != '')]
+                elif review_status == "Pending":
+                    df = df[df['Reviewed By'].isna() | (df['Reviewed By'] == '')]
+                    
+                # Display filtered count
+                st.sidebar.markdown(f"**Active Records: {len(df)}**")
                 
                 # Generate Statistics
                 stats = data_processor.generate_statistics(df)

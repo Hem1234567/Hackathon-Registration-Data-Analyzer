@@ -11,18 +11,48 @@ def normalize_text(text):
         return "Unknown"
     return str(text).strip().title()
 
+# Common college name mappings (normalized lowercase key -> standard name)
+COLLEGE_MAPPINGS = {
+    "rmk": "R.M.K. Engineering College",
+    "r.m.k": "R.M.K. Engineering College",
+    "rmk engineering college": "R.M.K. Engineering College",
+    "rajalakshmi engineering college": "Rajalakshmi Engineering College",
+    "rajakalashmi engineering college": "Rajalakshmi Engineering College",
+    "rajakalakshmi engineering college": "Rajalakshmi Engineering College",
+    "rec": "Rajalakshmi Engineering College",
+    "svce": "Sri Venkateswara College of Engineering",
+    "sri venkateswara college of engineering": "Sri Venkateswara College of Engineering",
+    "cit": "Chennai Institute of Technology",
+    "chennai institute of technology": "Chennai Institute of Technology",
+    "ssn": "SSN College of Engineering",
+    "ssn college of engineering": "SSN College of Engineering"
+}
+
 def normalize_college_name(name):
     """
     Specific normalization for college names.
-    Can be expanded with a mapping dictionary for common typos.
+    Uses a mapping dictionary for common typos and abbreviations.
     """
     if pd.isna(name) or name == "":
         return "Unknown College"
     
     name = str(name).strip()
-    # Basic cleanup
-    name = re.sub(r'\s+', ' ', name) # Replace multiple spaces with single space
+    # Basic cleanup: remove multiple spaces
+    name = re.sub(r'\s+', ' ', name)
     
+    # Create a normalized key for lookup (lowercase, remove dots for some comparisons if needed)
+    # We will try exact lowercase match first
+    lower_name = name.lower()
+    
+    # Check if we have a direct mapping
+    if lower_name in COLLEGE_MAPPINGS:
+        return COLLEGE_MAPPINGS[lower_name]
+        
+    # Handle variations like "R.M.K" vs "RMK" by removing dots for lookup
+    no_dots_name = lower_name.replace(".", "")
+    if no_dots_name in COLLEGE_MAPPINGS:
+        return COLLEGE_MAPPINGS[no_dots_name]
+        
     # Common replacements (can be expanded based on data)
     name = name.replace("IIT", "Indian Institute of Technology")
     name = name.replace("NIT", "National Institute of Technology")
