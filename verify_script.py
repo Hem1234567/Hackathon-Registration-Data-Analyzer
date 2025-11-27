@@ -10,12 +10,15 @@ def test_processing():
         print("Test data not found.")
         return
 
-    df, error = data_processor.load_data("test_data.xlsx")
+    sheets_dict, error = data_processor.load_data("test_data.xlsx")
     if error:
         print(f"FAILED: {error}")
         return
 
-    print("Data loaded successfully.")
+    print(f"Data loaded successfully. Found {len(sheets_dict)} sheets.")
+    
+    # Test merging
+    df = data_processor.merge_sheets(sheets_dict)
     df = data_processor.clean_data(df)
     print(f"Data cleaned. Shape: {df.shape}")
     

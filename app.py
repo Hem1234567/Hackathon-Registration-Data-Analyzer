@@ -16,16 +16,37 @@ uploaded_file = st.file_uploader("Upload Excel File", type=['xlsx', 'xls'])
 if uploaded_file is not None:
     with st.spinner("Processing data..."):
         # Load Data
-        df, error = data_processor.load_data(uploaded_file)
+        # Load Data
+        sheets_dict, error = data_processor.load_data(uploaded_file)
         
         if error:
             st.error(error)
         else:
-            # Clean Data
-            df = data_processor.clean_data(df)
+            # Analysis Mode Selection
+            analysis_mode = st.radio(
+                "Select Analysis Mode",
+                ["Full Analysis (Merge All Sheets)", "Individual Sheet Analysis"],
+                horizontal=True
+            )
             
-            # Generate Statistics
-            stats = data_processor.generate_statistics(df)
+            df = None
+            
+            if analysis_mode == "Full Analysis (Merge All Sheets)":
+                df = data_processor.merge_sheets(sheets_dict)
+                st.info(f"Analyzing merged data from {len(sheets_dict)} sheets.")
+            else:
+                sheet_names = list(sheets_dict.keys())
+                selected_sheet = st.selectbox("Select Sheet to Analyze", sheet_names)
+                if selected_sheet:
+                    df = sheets_dict[selected_sheet]
+                    st.info(f"Analyzing data from sheet: {selected_sheet}")
+            
+            if df is not None:
+                # Clean Data
+                df = data_processor.clean_data(df)
+                
+                # Generate Statistics
+                stats = data_processor.generate_statistics(df)
             
             # --- Dashboard ---
             

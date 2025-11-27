@@ -26,7 +26,7 @@ COLUMN_MAPPING = {
 def load_data(file):
     """
     Loads data from the specified Excel file, reading only supported sheets.
-    Returns a merged DataFrame with a 'Source Sheet' column.
+    Returns a dictionary of {sheet_name: dataframe}.
     """
     try:
         xls = pd.ExcelFile(file)
@@ -55,10 +55,20 @@ def load_data(file):
                 print(f"Error reading sheet {sheet_name}: {e}")
 
     if not all_data:
-        return pd.DataFrame(), "No matching sheets found. Please check the sheet names."
+        return {}, "No matching sheets found. Please check the sheet names."
         
-    merged_df = pd.concat(all_data, ignore_index=True)
-    return merged_df, None
+    # Return a dictionary of {sheet_name: dataframe}
+    sheets_dict = {name: df for name, df in zip(sheets_found, all_data)}
+    return sheets_dict, None
+
+def merge_sheets(sheets_dict):
+    """
+    Merges all sheets in the dictionary into a single DataFrame.
+    """
+    if not sheets_dict:
+        return pd.DataFrame()
+        
+    return pd.concat(sheets_dict.values(), ignore_index=True)
 
 def clean_data(df):
     """
