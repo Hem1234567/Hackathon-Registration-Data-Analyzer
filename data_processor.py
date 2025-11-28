@@ -3,12 +3,7 @@ import utils
 
 VERSION = "1.1"
 
-REQUIRED_SHEETS = [
-    "Early Bird Individuals 3.0",
-    "Early_Bird_3.0", 
-    "PEC HACKS 3.0 Individuals Revie",
-    "Normal Review round 1"
-]
+
 
 # Mapping various column names to a standard set
 COLUMN_MAPPING = {
@@ -39,22 +34,17 @@ def load_data(file):
     sheets_found = []
     
     for sheet_name in xls.sheet_names:
-        # Check for exact match or if the sheet name is one of the expected ones
-        # We strip whitespace just in case
-        clean_sheet_name = sheet_name.strip()
-        
-        if clean_sheet_name in REQUIRED_SHEETS:
-            try:
-                df = pd.read_excel(xls, sheet_name=sheet_name)
-                df['Source Sheet'] = sheet_name
-                
-                # Normalize columns immediately to handle variations across sheets
-                # We do a partial rename here to help with merging later if needed, 
-                # but main cleaning happens in clean_data
-                all_data.append(df)
-                sheets_found.append(sheet_name)
-            except Exception as e:
-                print(f"Error reading sheet {sheet_name}: {e}")
+        try:
+            df = pd.read_excel(xls, sheet_name=sheet_name)
+            df['Source Sheet'] = sheet_name
+            
+            # Normalize columns immediately to handle variations across sheets
+            # We do a partial rename here to help with merging later if needed, 
+            # but main cleaning happens in clean_data
+            all_data.append(df)
+            sheets_found.append(sheet_name)
+        except Exception as e:
+            print(f"Error reading sheet {sheet_name}: {e}")
 
     if not all_data:
         return {}, "No matching sheets found. Please check the sheet names."
@@ -79,6 +69,9 @@ def clean_data(df):
     if df.empty:
         return df
 
+    # Drop rows where all elements are missing
+    df = df.dropna(how='all')
+
     # 1. Normalize Column Names
     # Create a map that handles case insensitivity if needed, but for now use the direct mapping
     # We iterate through columns and try to map them
@@ -92,7 +85,7 @@ def clean_data(df):
         else:
             # Try case insensitive match
             for key, val in COLUMN_MAPPING.items():
-                if col.lower() == key.lower():
+                if str(col).lower() == key.lower():
                     new_columns[col] = val
                     break
     

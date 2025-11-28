@@ -7,7 +7,7 @@ def normalize_text(text):
     Normalizes text by converting to lowercase, removing extra spaces,
     and handling None/NaN values.
     """
-    if pd.isna(text) or text == "":
+    if pd.isna(text) or text == "" or str(text).lower() == 'nan':
         return "Unknown"
     return str(text).strip().title()
 
@@ -33,7 +33,7 @@ def normalize_college_name(name):
     Specific normalization for college names.
     Uses a mapping dictionary for common typos and abbreviations.
     """
-    if pd.isna(name) or name == "":
+    if pd.isna(name) or name == "" or str(name).lower() == 'nan':
         return "Unknown College"
     
     name = str(name).strip()
